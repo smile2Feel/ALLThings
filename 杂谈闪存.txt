@@ -1,0 +1,26 @@
+eMMC->UFS
+NVME(PCIe, MSI中断)
+AHCI(IDE->SATA, serial ATA, Serial Advanced Technology Attachment)
+NVMe实际上是一种通讯协议，在通讯协议里是应用层，它使用PCIe协议作为数据和链路层。
+AHCI只有1个命令队列，队列深度32；而NVMe可以有65535个队列，每个队列都可以深达65536个命令。NVMe也充分使用了MSI的2048个中断向量优势，延迟大大减小。
+
+
+NOR Flash适用于机顶盒？ ->因为XIP（eXecute In Place)特性
+execute in place (XIP) is a method of executing programs directly from long-term storage rather than copying it into RAM.
+
+
+SD(Secure Digital) card
+NAND(Not AND)
+P/E(Program/Erase Count)
+Block: 擦除操作的最小单位。
+Page：写入动作的最小单位。
+
+AHCI driver/NVM Express driver
+AHCI controller/NVM Express controller
+
+IDE并行接口
+SATA
+SATA-Express
+M.2(NGFF（Next Generation Form Factor))
+U.2
+

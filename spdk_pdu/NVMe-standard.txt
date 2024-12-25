@@ -1,0 +1,77 @@
+Introduction:
+NVM subsystem:
+An NVM subsystem includes one or more domains, one or more controllers, zero or more namespaces,
+and one or more ports. An NVM subsystem may include a non-volatile memory storage medium and an
+interface between the controller(s) in the NVM subsystem and non-volatile memory storage medium.
+
+Domain:
+A domain is the smallest indivisible unit that shares state (e.g., power state, capacity information).
+
+controller:
+A controller executes commands submitted by a host on a Submission Queue and posts a completion on
+a Completion Queue.
+
+namespace:
+A formatted quantity of non-volatile memory that may be directly accessed by a host.
+An NVM Express controller may support multiple namespaces that are referenced using a namespace ID.
+
+NVM subsystem port:
+An NVMe over Fabrics protocol interface between an NVM subsystem and a fabric. An NVM subsystem
+port is a collection of one or more physical fabric interfaces that together act as a single interface.
+
+Controllers expose this nonvolatile storage medium to hosts through namespaces.
+
+Theory of Operation: 
+The message-based transport model has two subtypes: the messageonly transport model and the message/memory transport model.
+A memory-based transport model is one in which commands, responses, and data are transferred between a host and an NVM subsystem by
+performing explicit memory read and write operations. A message-based transport model is one in which
+messages containing command capsules and response capsules are sent between a host and an NVM subsystem.
+
+The NVM Express interface is based on a paired Submission and Completion Queue mechanism.
+Commands are placed by host software into a Submission Queue. Completions are placed into the
+associated Completion Queue by the controller.
+1. Admin Submission Completion Queue
+	An Admin Submission Queue and associated Completion Queue exist for the purpose of controller
+	management and control (e.g., creation and deletion of I/O Submission and Completion Queues, aborting
+	commands, etc.). Only commands that are part of the Admin Command Set or the Fabrics Command Set
+	may be submitted to the Admin Submission Queue.
+2. An I/O Command Set is used with an I/O queue pair.
+3. The Fabrics Command Set is NVMe over Fabrics specific. 
+	Fabrics Command Set commands are used for operations specific to NVMe over Fabrics including establishing a connection,
+	NVMe in-band authentication, and to get or set a property.
+
+A Submission Queue (SQ) is a circular buffer with a fixed slot size that the host software uses to submit
+commands for execution by the controller. 
+A Completion Queue (CQ) is a circular buffer with a fixed slot size used to post status for completed
+commands.
+
+2.2 Message-Based Transport Model
+
+
+
+
+
+There is a very detailed description of the command submission and completion process in the NVMe specification, which is conveniently available from the main page over at NVM Express.
+
+
+The user is going to construct a queue pair at some early time in the life cycle of the program。
+CID value
+PRP list 
+tracker (slot)
+Each NVMe command has two PRP list elements embedded into it
+
+With a tracker filled out, SPDK copies the 64 byte command into the actual NVMe submission queue slot and then rings the submission queue tail doorbell to tell the device to go process it. SPDK then returns back to the user, without waiting for a completion.
+
+The user can periodically call spdk_nvme_qpair_process_completions() to tell SPDK to examine the completion queue. Specifically, it reads the phase bit of the next expected completion slot and when it flips, looks at the CID value to find the tracker, which points at the request object. The request object contains a function pointer that the user provided initially, which is then called to complete the command.
+
+The spdk_nvme_qpair_process_completions() function will keep advancing to the next completion slot until it runs out of completions, at which point it will write the completion queue head doorbell to let the device know that it can use the completion queue slots for new completions and return
+
+
+
+spdk_nvme_ns_cmd_read
+	_nvme_ns_cmd_rw (获取nvme request）
+		nvme_allocate_request
+		_nvme_ns_cmd_split_request
+		sectors_per_stripe
+	_nvme_qpair_submit_request (children)
+		nvme_qpair_check_enabled

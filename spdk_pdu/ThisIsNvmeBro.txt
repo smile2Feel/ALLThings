@@ -1,0 +1,25 @@
+There is a very detailed description of the command submission and completion process in the NVMe specification, which is conveniently available from the main page over at NVM Express.
+
+
+The user is going to construct a queue pair at some early time in the life cycle of the program。
+CID value
+PRP list 
+tracker (slot)
+Each NVMe command has two PRP list elements embedded into it
+
+With a tracker filled out, SPDK copies the 64 byte command into the actual NVMe submission queue slot and then rings the submission queue tail doorbell to tell the device to go process it. SPDK then returns back to the user, without waiting for a completion.
+
+The user can periodically call spdk_nvme_qpair_process_completions() to tell SPDK to examine the completion queue. Specifically, it reads the phase bit of the next expected completion slot and when it flips, looks at the CID value to find the tracker, which points at the request object. The request object contains a function pointer that the user provided initially, which is then called to complete the command.
+
+The spdk_nvme_qpair_process_completions() function will keep advancing to the next completion slot until it runs out of completions, at which point it will write the completion queue head doorbell to let the device know that it can use the completion queue slots for new completions and return
+
+
+
+spdk_nvme_ns_cmd_read
+	_nvme_ns_cmd_rw (获取nvme request）
+		nvme_allocate_request
+		_nvme_ns_cmd_split_request
+		sectors_per_stripe
+	_nvme_qpair_submit_request (children)
+		nvme_qpair_check_enabled
+		

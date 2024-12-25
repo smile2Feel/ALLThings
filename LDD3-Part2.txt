@@ -1,0 +1,5 @@
+ISA(I/O ports) 游戏卡？
+PCI
+
+removable device有啥特性？
+partition, mount, mkfs 为什么会open块设备？通过什么接口open块设备？

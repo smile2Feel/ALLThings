@@ -1,0 +1,28 @@
+QUES：
+Every USB
+device is driven by a USB module that works with the USB subsystem, but the device
+itself shows up in the system as a char device (a USB serial port, say), a block device
+(a USB memory card reader), or a network device (a USB Ethernet interface).	-p7
+网卡也可以通过USB？
+
+
+Naturally, Linux systems run multiple processes, more than one of which can be trying to use your driver
+at the same time. Most devices are capable of interrupting the processor; interrupt
+handlers run asynchronously and can be invoked at the same time that your driver is
+trying to do something else. Several software abstractions (such as kernel timers,
+introduced in Chapter 7) run asynchronously as well. Moreover, of course, Linux
+can run on symmetric multiprocessor (SMP) systems, with the result that your driver
+could be executing concurrently on more than one CPU. Finally, in 2.6, kernel code
+has been made preemptible; this change causes even uniprocessor systems to have
+many of the same concurrency issues as multiprocessor systems.
+
+As a result, Linux kernel code, including driver code, must be reentrant—it must be
+capable of running in more than one context at the same time.
+
+Data structures must
+be carefully designed to keep multiple threads of execution separate, and the code
+must take care to access shared data in ways that prevent corruption of the data.
+
+In 2.6, kernel code can (almost) never
+assume that it can hold the processor over a given stretch of code.
+

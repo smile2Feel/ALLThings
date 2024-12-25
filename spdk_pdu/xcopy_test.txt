@@ -1,0 +1,89 @@
+{'lun_id': '1', 'lun_name': 'lun_xcopy_src', 'disk    pool_name': 'dp63', 'pool_name': 'hbd', 'lun_type': 'thin', 'lun_size': 2048.0, 'size_byte': 2147483648, 'lun_feature': 0, 'description': '', 'lu    n_update_time': '2024-04-18 19:31:01', 'parent_lun': None, 'parent_snap': None, 'create_from_snap': 0, 'subcluster': 'np63', 'stripe_unit': 0, 's    tripe_count': 0, 'used_capacity': 0, 'lun_wwn': '3a4d0c20f42246378ebc68c03e8d0516', 'state': 0, 'lun_create_time': '2024-04-18T19:30:59.906Z', 'p    erf_switch': 'off', 'tgt_host': False}
+
+{'lun_id': '2', 'lun_name': 'lun_xcopy_dst', 'diskpool_name': 'dp63', 'pool_name': 'hbd', 'lun_type': 'thin', 'lun_size': 2048.0, 'size_byte    ': 2147483648, 'lun_feature': 0, 'description': '', 'lun_update_time': '2024-04-18 19:31:26', 'parent_lun': None, 'parent_snap': None, 'create_fr    om_snap': 0, 'subcluster': 'np63', 'stripe_unit': 0, 'stripe_count': 0, 'used_capacity': 0, 'lun_wwn': '3a4d0c20f42246378ebc68c03e8d0517', 'state    ': 0, 'lun_create_time': '2024-04-18T19:31:26.920Z', 'perf_switch': 'off', 'tgt_host': False}
+
+/opt/h3c/script/tgt/rpc.py   log_set_flag all
+/opt/h3c/script/tgt/rpc.py  log_set_print_level DEBUG
+
+tcpdump -i ethA69-0 -s 0 -w spdk-pkg.pcap 'tcp port 3260'
+
+EXAMPLES
+       Copy 2M of data from the start of one device to another:
+
+       # sg_xcopy if=/dev/sdo of=/dev/sdp count=2048 list_id=2 dc=1
+       sg_xcopy: if=/dev/sdo skip=0 of=/dev/sdp seek=0 count=1024
+       Start of loop, count=1024, bpt=65535, lba_in=0, lba_out=0
+       sg_xcopy: 1024 blocks, 1 command
+
+       Check the status of the EXTENDED COPY command:
+
+       # sg_copy_results --status --list_id=2 /dev/sdp
+       Receive copy results (copy status):
+           Held data discarded: Yes
+           Copy manager status: Operation completed without errors
+           Segments processed: 1
+           Transfer count units: 0
+           Transfer count: 0
+
+客户端重连：
+#!/bin/bash
+iscsiadm -m session -u
+iscsiadm -m discovery -t st -p 182.200.29.63 -l
+
+sg_dd if=sess_reconn.sh of=/dev/sdg bs=512 count=2
+sg_xcopy if=/dev/sdg of=/dev/sdh count=2
+sg_dd if=/dev/sdh of=- count=1
+		   
+
+重启脚本：
+#!/bin/bash
+
+pkill -9 tgtd
+sleep 2
+service tgtd restart
+sleep 2
+
+/opt/h3c/script/tgt/rpc.py iscsi_port_operate 1 "add" "182.200.29.63"
+#/opt/h3c/script/tgt/rpc.py iscsi_host_create 1 1  "iqn.2012-01.com.openeuler:bade60d8790 1" localhost
+/opt/h3c/script/tgt/rpc.py iscsi_host_create 1 1  "iqn.2012-01.com.openeuler:ecfead859a8 1"
+
+/opt/h3c/script/tgt/rpc.py bdev_hbd_create .dp63.hbd 1 512 -b lun_xcopy_src -i  HBD_1 -u 3a4d0c20-f422-4637-8ebc-68c03e8d0516
+/opt/h3c/script/tgt/rpc.py bdev_hbd_create .dp63.hbd 2 512 -b lun_xcopy_dst -i  HBD_2 -u 3a4d0c20-f422-4637-8ebc-68c03e8d0517
+
+/opt/h3c/script/tgt/rpc.py iscsi_host_add_lun 1 1 1 lun_xcopy_src 
+/opt/h3c/script/tgt/rpc.py iscsi_host_add_lun 1 2 2 lun_xcopy_dst
+
+/opt/h3c/script/tgt/rpc.py   log_set_flag "scsi"
+/opt/h3c/script/tgt/rpc.py   log_set_flag "iscsi"
+/opt/h3c/script/tgt/rpc.py  log_set_level DEBUG
+
+
+安装最新包并重启：
+ls | grep '^tgt' | sort -V | tail -n 1 | xargs tar -xmf
+pkill -9 tgtd
+./tgt/install_tgt.sh
+source restart_tgt_xcopy.sh
+
+todo:
+拆分IO设计，卷粒度复制
+
+int
+spdk_scsi_lun_id_fmt_to_int(uint64_t fmt_lun)
+host_lun_id的生成规则把v5的拷贝过来，现在只支持256个卷，需要支持512个卷
+
+#0  0x00007f4cf9ddbb6f in ?? () from /usr/lib64/libc.so.6
+#1  0x00007f4cf9d8fb66 in raise () from /usr/lib64/libc.so.6
+#2  0x0000000000641155 in tgt_handle_fatal_signal (signum=11) at app.c:177
+#3  <signal handler called>
+#4  0x00000000004d5685 in tgt_scsi_lun_get_bdev_pool_id (lun=0x0) at lun.c:621
+#5  0x0000000000492f49 in iscsi_pg_inflight_io_add (task=0x2000a5594f40) at iscsi.c:5151
+#6  0x000000000048a729 in iscsi_pdu_payload_op_scsi (conn=0x7f4c98b7aa88, pdu=0x2000a7131700) at iscsi.c:3568
+#7  0x0000000000490be1 in iscsi_pdu_payload_handle (conn=0x7f4c98b7aa88, pdu=0x2000a7131700) at iscsi.c:4687
+#8  0x00000000004926d9 in iscsi_read_pdu (conn=0x7f4c98b7aa88) at iscsi.c:4958 
+@zhangpeng，这个是不是要鹏哥你看下呢
+
+host_lun_id， lun_id，不一样了
+
+IO并发度计数如何不加锁
+
+bdev_scsi_process_block getlba里面直接break，不需要return

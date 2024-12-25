@@ -1,0 +1,93 @@
+方案问题：
+10. caw支持的大小？1 block->v5 （和block limit保持一致）
+
+3. 下层接口对齐理解
+	a. TURsluozhelei(怎么通知上层）, kunzu 
+	b. CAW接口
+	c.hbd_aio_write/read最大length，影响xcopy，verify ： 无限制（内存池可能有限制）
+
+模块化问题：
+6. process_null_lun处理RAID (todo)
+
+7. 不注册函数到task实现获取池id等 (先不管，后面再处理），代码分层，频繁访问iscsi接口。
+
+其他：
+1. 各个长度和奇怪的字段
+task->offset：Track the current offset of large read or write io. 主要用于subtask, detain, abort task等复杂IO。
+
+task->length	->read/write 就是task->transfer_len，SPDK_BDEV_LARGE_BUF_MAX_SIZE
+task->transfer_len -> (struct iscsi_bhs_scsi_req: expected_data_xfer_len)
+		iscsi.scsicommand.expecteddatatransferlength (rfc3720:10.3.4)
+		有哪些是bidirectional operations? immediate data? FirstBurstLength? 
+
+task->data_transferred: Amount of data actually transferred. 实际发送数据，和transfer_len比较，结果underflow/overflow。
+
+bdev_scsi_readwrite: 
+offset_blocks += lba（协议报文lba和子IO的偏移相加）
+xfer_len：(协议报文的blocks count)
+num_blocks:(子IO的length转换成blocks)
+
+
+理解各个阶段需要的buffer。
+
+2. 理解更新block limits
+VPD INQUIRY: Block limits page (SBC)
+  Maximum compare and write length: 1 blocks
+  Optimal transfer length granularity: 0 blocks [not reported]
+  Maximum transfer length: 0 blocks [not reported]
+  Optimal transfer length: 0 blocks [not reported]
+  Maximum prefetch transfer length: 0 blocks [ignored]
+  Maximum unmap LBA count: 131072
+  Maximum unmap block descriptor count: 8192
+  Optimal unmap granularity: 8192 blocks
+  Unmap granularity alignment valid: true
+  Unmap granularity alignment: 8192
+  Maximum write same length: 0x2000 blocks
+  Maximum atomic transfer length: 0 blocks [not reported]
+  Atomic alignment: 0 [unaligned atomic writes permitted]
+  Atomic transfer length granularity: 0 [no granularity requirement]
+  Maximum atomic transfer length with atomic boundary: 0 blocks [not reported]
+  Maximum atomic boundary size: 0 blocks [can only write atomic 1 block]
+  
+
+[root@node65 ~]# sg_vpd -p 0xb0 /dev/sdh
+Block limits VPD page (SBC):
+  Write same non-zero (WSNZ): 0
+  Maximum compare and write length: 255 blocks
+  Optimal transfer length granularity: 8 blocks
+  Maximum transfer length: 8192 blocks
+  Optimal transfer length: 8192 blocks
+  Maximum prefetch transfer length: 0 blocks [ignored]
+  Maximum unmap LBA count: 4194304
+  Maximum unmap block descriptor count: 256
+  Optimal unmap granularity: 0 blocks [not reported]
+  Unmap granularity alignment valid: false
+  Unmap granularity alignment: 0 [invalid]
+  Maximum write same length: 0x200 blocks
+  Maximum atomic transfer length: 0 blocks [not reported]
+  Atomic alignment: 0 [unaligned atomic writes permitted]
+  Atomic transfer length granularity: 0 [no granularity requirement
+  Maximum atomic transfer length with atomic boundary: 0 blocks [not reported]
+  Maximum atomic boundary size: 0 blocks [can only write atomic 1 block]
+
+4. xcopy 如何批量复制，拆分IO设计
+	->暂时不需要拆分，由于协议报文限制，最大0xff ff个blocks 32M，后端也不限制IO大小。读内存分配可能会有问题，暂时不管。
+	->verify的transfer length小于1M，不需要考虑
+
+5. host_lun_id, lun_id各种id
+host_lun_id:主机相关，每个主机下的卷id，隔离域为主机
+	_scsi_get_devid(uint8_t *p)
+	 a. 取高2位，如果为0、1，则host_lun_id取lun_id的低16位；
+	 b. 如果非0,1，返回INVALID
+cmd->lun:
+
+lun_id:
+
+cmd->lun通过scsi_get_devid获取host_lun_id，通过pHost->luns[]获取lun_id,然后获取cmd->dev.
+
+8. IO回复流程堆栈分析，各个资源释放函数理解
+
+9. sg_rtpg要和sg_inquiry保持一致（暂时不管）
+
+11. full_feature，data-in/out报文，登录各个流程 
+

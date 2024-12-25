@@ -1,0 +1,14 @@
+nvmf:
+controller
+namespace, Zoned namespace 
+qpair
+transport_id
+controller memory buffer/host memory buffer
+huge memory
+DPDK memory segments
+shared memory group ID
+vmd
+
+spdk_env_init
+spdk_vmd_init
+spdk_nvme_probe

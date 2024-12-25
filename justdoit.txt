@@ -1,0 +1,8 @@
+1. 接收端一个ACK可以对应发送端多个SEQ吗？
+2. 客户端接收到FIN进入TIME_WAIT状态时，服务端出了FIN报文的ACK，其他报文都已ACKed了吗？TIME_WAIT只涉及到FIN报文重传吗？
+3. 2MSL相当于允许报文丢失一次，如果FIN的ACK在一个MSL内丢失，被动发重发的FIN会在第2个MSL内到达，TIME_WAIT状态的连接可以处理。
+   但是如果重发的FIN报文也丢失了，后续再重发的FIN报文TIME_WAIT状态就处理不了了，由于概率太小，所以就忽略了。
+4. 报文和对应的ACK最长存在时间为2MSL，超过2MSL该报文相关的就消失了。
+
+LIST：
+list_for_each(h, i, member) member字段传成i中其他非list_node字段了，只会有warning？

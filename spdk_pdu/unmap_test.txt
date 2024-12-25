@@ -1,0 +1,36 @@
+2024-04-16 10:46:31,491 - INFO - [pid:46560][tid:139803593008704][lun_query_handler.py][query_lun][line:119] - onestor ret = {'total': 1, 'resul     t': [{'lun_id': '1', 'lun_name': 'lun_unmap', 'diskpool_name': 'dp63', 'pool_name': 'zpool', 'lun_type': 'thin', 'lun_size': 2048.0, 'size_byte'     : 2147483648, 'lun_feature': 0, 'description': '', 'lun_update_time': '2024-04-16 10:46:31', 'parent_lun': None, 'parent_snap': None, 'create_fr     om_snap': 0, 'subcluster': 'np63', 'stripe_unit': 0, 'stripe_count': 0, 'used_capacity': 0, 'lun_wwn': '03ae926a28014010bfeae61f76e4e28f', 'stat     e': 0, 'lun_create_time': '2024-04-16T10:46:31.281Z', 'perf_switch': 'off', 'tgt_host': False}]}
+
+
+
+启动过程：
+kill -9 $(pidof tgtd)
+
+systemctl restart  tgtd
+
+/opt/h3c/script/tgt/rpc.py iscsi_port_operate 1 "add" "182.200.29.63"
+/opt/h3c/script/tgt/rpc.py iscsi_host_create 1 1  "iqn.2012-01.com.openeuler:bade60d8790 1"
+
+/opt/h3c/script/tgt/rpc.py bdev_hbd_create .dp63.hbd 1 512 -b lun_unmap -i  HBD_1 -u 03ae926a-2801-4010-bfea-e61f76e4e28f
+/opt/h3c/script/tgt/rpc.py iscsi_host_add_lun 1 1 1 lun_unmap
+/opt/h3c/script/tgt/rpc.py iscsi_host_remove_lun 1 1 1 lun_unmap
+
+
+
+集群命令：
+查询硬盘池信息：onestor mon osd show diskpool all
+查询存储池信息：onestor mon osd show pool all
+查询引擎状态：onestor mon engine cli engine dump
+查询mon状态：onestor mon get mon_status                        查看集群ID和健康状态
+查询pgnum：onestor dpe osd get_pgnum pool [pool name] 
+
+
+sg_dd if=/var/log/messages of=/dev/sdg skip=10 seek=0x24 bs=512 count=10
+sg_dd if=/dev/sdg of=- skip=0x24 bs=512 count=10
+sg_unmap --lba='0x24' --num='5' /dev/sdg
+
+sg_get_lba_status /dev/sdg
+sg_inq /dev/sdg
+sg_inq -p 0x83 /dev/sdg
+
+
+

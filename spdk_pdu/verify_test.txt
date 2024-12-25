@@ -1,0 +1,20 @@
+with no context:
+sg_verify /dev/sdh
+echo $?
+
+verify 10:
+sg_verify  --ebytchk=1 --count=2 --ndo=512 --in=caw.write /dev/sdh
+VERIFY(10) MISCOMPARE: started at LBA 0x0
+sg_verify failed: Miscompare
+
+sg_dd if=caw.write of=/dev/sdh bs=512 count=2
+sg_verify  --ebytchk=1 --count=2 --ndo=512 --in=caw.write /dev/sdh
+echo $?
+
+只能校验一个块，data-out 512bytes。。
+Many  Operating Systems put limits on the maximum size of the data-out (and data-in) buffer. For Linux at one time the limit was less than
+       1 MB but has been increased somewhat.	
+
+sg_dd if=caw.write of=/dev/sdm seek=0x24 bs=512 count=2
+sg_verify  --ebytchk=1 --lba=0x24 --count=2 --ndo=512 --in=caw.write /dev/sdm
+sg_verify  --ebytchk=1 --lba=0x23 --count=2 --ndo=512 --in=caw.write /dev/sdm

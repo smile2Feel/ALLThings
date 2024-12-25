@@ -1,0 +1,24 @@
+sg_dd if=/var/log/storage/TGT/TGT.log of=/dev/sdc skip=10 seek=2048 bs=512 count=10
+sg_dd if=/dev/sdc of=- skip=2048 bs=512 count=10
+
+sg_write_same --xferlen=512  --lba=0x12 --num=63 --in=writesame.in /dev/sdc
+sg_dd if=/dev/sdc of=- skip=0x12 bs=512 count=10
+
+
+sg_write_same --xferlen=512  --lba=0x82 --num=63 --in=writesame.in /dev/sdc
+sg_write_same --xferlen=512  --lba=0x22 --num=63 --in=writesame.in /dev/sdc
+sg_unmap --lba='0x12,0x82' --num='63,62' /dev/sdc
+sg_dd if=/dev/sdc of=- skip=0x82 bs=512 count=63
+
+
+
+sg_write_same --xferlen=512  --lba=0x22 --num=63 --in=writesame.in /dev/sdc
+sg_compare_and_write --xferlen=1024 --lba=0x22 --inc=writesame.in --inw=caw.write /dev/sdc
+sg_dd if=/dev/sdc of=- skip=0x22 bs=512 count=10
+
+
+sg_dd if=writesame.in of=/dev/sdm seek=0x24 count=2
+sg_dd if=/dev/sdm of=- skip=0x24 bs=512 count=2
+
+
+

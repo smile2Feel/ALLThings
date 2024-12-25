@@ -1,0 +1,95 @@
+(gdb) bt
+#0  bdev_scsi_process_primary (task=0x200032022e40) at scsi_bdev.c:2048
+#1  0x00000000005494b2 in bdev_scsi_execute (task=0x200032022e40) at scsi_bdev.c:2136
+#2  0x000000000054398c in _scsi_lun_execute_task (lun=0x1659510, task=0x200032022e40) at lun.c:213
+#3  0x0000000000543b46 in scsi_lun_execute_task (lun=0x1659510, task=0x200032022e40) at lun.c:264
+#4  0x0000000000542ca3 in spdk_scsi_dev_queue_task (dev=0xaffa00 <g_devs>, task=0x200032022e40) at dev.c:291
+#5  0x0000000000524fdb in iscsi_queue_task (conn=0x7f98f0c46658, task=0x200032022e40) at iscsi.c:3212
+#6  0x0000000000525a3a in iscsi_pdu_payload_op_scsi (conn=0x7f98f0c46658, pdu=0x2000197e2580) at iscsi.c:3460
+#7  0x00000000005288bf in iscsi_pdu_payload_handle (conn=0x7f98f0c46658, pdu=0x2000197e2580) at iscsi.c:4575
+#8  0x00000000005293ba in iscsi_read_pdu (conn=0x7f98f0c46658) at iscsi.c:4845
+#9  0x00000000005294c1 in iscsi_handle_incoming_pdus (conn=0x7f98f0c46658) at iscsi.c:4880
+#10 0x000000000051ab49 in iscsi_conn_sock_cb (arg=0x7f98f0c46658, group=0x7f98e4000960, sock=0x1658e20) at conn.c:1492
+#11 0x000000000057f245 in sock_group_impl_poll_count (group_impl=0x7f98e4000990, group=0x7f98e4000960, max_events=32) at sock.c:726
+#12 0x000000000057f2dc in spdk_sock_group_poll_count (group=0x7f98e4000960, max_events=32) at sock.c:752
+#13 0x000000000057f149 in spdk_sock_group_poll (group=0x7f98e4000960) at sock.c:703
+#14 0x000000000053380c in iscsi_poll_group_poll (ctx=0x7f98e4000920) at iscsi_subsystem.c:963
+#15 0x000000000058980e in thread_execute_poller (thread=0x164fb20, poller=0x7f98e4000bb0) at thread.c:953
+#16 0x0000000000589d91 in thread_poll (thread=0x164fb20, max_msgs=0, now=19005462975359690) at thread.c:1079
+#17 0x000000000058a031 in spdk_thread_poll (thread=0x164fb20, max_msgs=0, now=19005462975359690) at thread.c:1163
+#18 0x000000000053e9e6 in _reactor_run (reactor=0x164c600) at reactor.c:914
+#19 0x000000000053ead5 in reactor_run (arg=0x164c600) at reactor.c:952
+#20 0x00000000005e96a6 in eal_thread_loop (arg=0x2) at ../lib/eal/common/eal_common_thread.c:212
+#21 0x00000000006033fd in eal_worker_thread_loop (arg=0x2) at ../lib/eal/linux/eal.c:916
+#22 0x00007f98f42f7ea5 in start_thread () from /lib64/libpthread.so.0
+#23 0x00007f98f4020b8d in clone () from /lib64/libc.so.6
+
+
+#0  iscsi_conn_write_pdu (conn=0x7f98f0d10d20, pdu=0x2000197e2100, cb_fn=0x51a7f7 <iscsi_conn_pdu_generic_complete>, cb_arg=0x0) at conn.c:1438
+#1  0x0000000000524e77 in iscsi_task_response (conn=0x7f98f0d10d20, task=0x200032010c00) at iscsi.c:3178
+#2  0x0000000000519bce in process_non_read_task_completion (conn=0x7f98f0d10d20, task=0x200032010c00, primary=0x200032010c00) at conn.c:1143
+#3  0x0000000000519d7e in iscsi_task_cpl (scsi_task=0x200032010c00) at conn.c:1191
+#4  0x0000000000543343 in scsi_lun_complete_task (lun=0x1659510, task=0x200032010c00) at lun.c:24
+#5  0x00000000005439b0 in _scsi_lun_execute_task (lun=0x1659510, task=0x200032010c00) at lun.c:222
+#6  0x0000000000543b46 in scsi_lun_execute_task (lun=0x1659510, task=0x200032010c00) at lun.c:264
+#7  0x0000000000542ca3 in spdk_scsi_dev_queue_task (dev=0xaffa00 <g_devs>, task=0x200032010c00) at dev.c:291
+#8  0x0000000000524fdb in iscsi_queue_task (conn=0x7f98f0d10d20, task=0x200032010c00) at iscsi.c:3212
+#9  0x0000000000525a3a in iscsi_pdu_payload_op_scsi (conn=0x7f98f0d10d20, pdu=0x2000197e2340) at iscsi.c:3460
+#10 0x00000000005288bf in iscsi_pdu_payload_handle (conn=0x7f98f0d10d20, pdu=0x2000197e2340) at iscsi.c:4575
+#11 0x00000000005293ba in iscsi_read_pdu (conn=0x7f98f0d10d20) at iscsi.c:4845
+#12 0x00000000005294c1 in iscsi_handle_incoming_pdus (conn=0x7f98f0d10d20) at iscsi.c:4880
+#13 0x000000000051ab49 in iscsi_conn_sock_cb (arg=0x7f98f0d10d20, group=0x7f98ec000960, sock=0x16508c0) at conn.c:1492
+#14 0x000000000057f245 in sock_group_impl_poll_count (group_impl=0x7f98ec000990, group=0x7f98ec000960, max_events=32) at sock.c:726
+#15 0x000000000057f2dc in spdk_sock_group_poll_count (group=0x7f98ec000960, max_events=32) at sock.c:752
+#16 0x000000000057f149 in spdk_sock_group_poll (group=0x7f98ec000960) at sock.c:703
+#17 0x000000000053380c in iscsi_poll_group_poll (ctx=0x7f98ec000920) at iscsi_subsystem.c:963
+#18 0x000000000058980e in thread_execute_poller (thread=0x164f790, poller=0x7f98ec000bb0) at thread.c:953
+#19 0x0000000000589d91 in thread_poll (thread=0x164f790, max_msgs=0, now=19018458645818740) at thread.c:1079
+#20 0x000000000058a031 in spdk_thread_poll (thread=0x164f790, max_msgs=0, now=19018458645818740) at thread.c:1163
+#21 0x000000000053e9e6 in _reactor_run (reactor=0x164c340) at reactor.c:914
+#22 0x000000000053ead5 in reactor_run (arg=0x164c340) at reactor.c:952
+#23 0x00000000005e96a6 in eal_thread_loop (arg=0x1) at ../lib/eal/common/eal_common_thread.c:212
+#24 0x00000000006033fd in eal_worker_thread_loop (arg=0x1) at ../lib/eal/linux/eal.c:916
+#25 0x00007f98f42f7ea5 in start_thread () from /lib64/libpthread.so.0
+#26 0x00007f98f4020b8d in clone () from /lib64/libc.so.6
+
+
+#0  _iscsi_conn_pdu_write_done (cb_arg=0x2000197e1ec0, err=0) at conn.c:1395
+#1  0x0000000000511557 in spdk_sock_request_complete (sock=0x16506e0, req=0x2000197e1fc0, err=0)
+    at /home/z28172/spdk/include/spdk_internal/sock.h:163
+#2  0x000000000051167d in spdk_sock_request_put (sock=0x16506e0, req=0x2000197e1fc0, err=0) at /home/z28172/spdk/include/spdk_internal/sock.h:184
+#3  0x000000000051530a in _sock_flush (sock=0x16506e0) at posix.c:1424
+#4  0x00000000005165a4 in posix_sock_group_impl_poll (_group=0x7f98e4000990, max_events=32, socks=0x7f98f2d076d0) at posix.c:2046
+#5  0x000000000057f1ae in sock_group_impl_poll_count (group_impl=0x7f98e4000990, group=0x7f98e4000960, max_events=32) at sock.c:718
+#6  0x000000000057f2dc in spdk_sock_group_poll_count (group=0x7f98e4000960, max_events=32) at sock.c:752
+#7  0x000000000057f149 in spdk_sock_group_poll (group=0x7f98e4000960) at sock.c:703
+#8  0x000000000053380c in iscsi_poll_group_poll (ctx=0x7f98e4000920) at iscsi_subsystem.c:963
+#9  0x000000000058980e in thread_execute_poller (thread=0x164fb20, poller=0x7f98e4000bb0) at thread.c:953
+#10 0x0000000000589d91 in thread_poll (thread=0x164fb20, max_msgs=0, now=19019618223851812) at thread.c:1079
+#11 0x000000000058a031 in spdk_thread_poll (thread=0x164fb20, max_msgs=0, now=19019618223851812) at thread.c:1163
+#12 0x000000000053e9e6 in _reactor_run (reactor=0x164c600) at reactor.c:914
+#13 0x000000000053ead5 in reactor_run (arg=0x164c600) at reactor.c:952
+#14 0x00000000005e96a6 in eal_thread_loop (arg=0x2) at ../lib/eal/common/eal_common_thread.c:212
+#15 0x00000000006033fd in eal_worker_thread_loop (arg=0x2) at ../lib/eal/linux/eal.c:916
+#16 0x00007f98f42f7ea5 in start_thread () from /lib64/libpthread.so.0
+#17 0x00007f98f4020b8d in clone () from /lib64/libc.so.6
+
+
+
+#0  _iscsi_conn_pdu_write_done (cb_arg=0x2000197e2100, err=-125) at conn.c:1395
+#1  0x0000000000511879 in spdk_sock_abort_requests (sock=0x16508c0) at /home/z28172/spdk/include/spdk_internal/sock.h:221
+#2  0x000000000051656b in posix_sock_group_impl_poll (_group=0x7f98ec000990, max_events=32, socks=0x7f98f35086d0) at posix.c:2048
+#3  0x000000000057f1ae in sock_group_impl_poll_count (group_impl=0x7f98ec000990, group=0x7f98ec000960, max_events=32) at sock.c:718
+#4  0x000000000057f2dc in spdk_sock_group_poll_count (group=0x7f98ec000960, max_events=32) at sock.c:752
+#5  0x000000000057f149 in spdk_sock_group_poll (group=0x7f98ec000960) at sock.c:703
+#6  0x000000000053380c in iscsi_poll_group_poll (ctx=0x7f98ec000920) at iscsi_subsystem.c:963
+#7  0x000000000058980e in thread_execute_poller (thread=0x164f790, poller=0x7f98ec000bb0) at thread.c:953
+#8  0x0000000000589d91 in thread_poll (thread=0x164f790, max_msgs=0, now=19019083109376368) at thread.c:1079
+#9  0x000000000058a031 in spdk_thread_poll (thread=0x164f790, max_msgs=0, now=19019083109376368) at thread.c:1163
+#10 0x000000000053e9e6 in _reactor_run (reactor=0x164c340) at reactor.c:914
+#11 0x000000000053ead5 in reactor_run (arg=0x164c340) at reactor.c:952
+#12 0x00000000005e96a6 in eal_thread_loop (arg=0x1) at ../lib/eal/common/eal_common_thread.c:212
+#13 0x00000000006033fd in eal_worker_thread_loop (arg=0x1) at ../lib/eal/linux/eal.c:916
+#14 0x00007f98f42f7ea5 in start_thread () from /lib64/libpthread.so.0
+#15 0x00007f98f4020b8d in clone () from /lib64/libc.so.6
+

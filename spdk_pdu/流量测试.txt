@@ -1,0 +1,10 @@
+TCP流量测试：
+iperf -s -i 2 -l 4m -N
+iperf -c 175.19.53.111 -i 1 -t 30 -N -l 4m
+
+RDMA流量测试：
+ib_write_bw -d mlx5_0 -s 4194304 -F -R --report_gbits
+ib_write_bw -d mlx5_0 -i 1 175.19.53.111 -n 10000 -F -R -s 4194304 --report_gbits
+
+ib_send_bw -d mlx5_0 -s 8192 -F -R --report_gbits
+ib_send_bw -d mlx5_0 -i 1 175.19.53.111 -n 1000 -F -R -s 8192 --report_gbits

@@ -1,0 +1,44 @@
+multipath安装和使用：
+安装：
+	通过命令：lsmod |grep dm_multipath 检查是否正常安装成功。
+	如果没有输出说明没有安装那么通过yum功能安装一下软件包：yum –y install device-mapper device-mapper-multipath
+运行：
+	1.编辑/etc/multipath.conf，内容按场景来，一般不需要关注：
+		blacklist {
+		devnode "^sda"
+		}
+
+		defaults {
+		user_friendly_names yes
+		path_grouping_policy multibus
+		failback immediate
+		no_path_retry fail
+		}
+	2. 启动multipath服务
+		service multipathd start
+挂载卷下IO：
+	1.客户端通过多个存储节点登录
+		iscsiadm -m discovery -t st -p 172.17.173.23 -l
+		iscsiadm -m discovery -t st -p 172.17.173.22 -l
+		iscsiadm -m discovery -t st -p 172.17.173.21 -l
+	登录后有对应卷：
+		[root@node21 ~]# lsscsi
+		[15:0:0:0]   storage IET      Controller       0001  -
+		[15:0:0:1]   disk    IET      Hbd Disk         0001  /dev/sdc
+		[16:0:0:0]   storage IET      Controller       0001  -
+		[16:0:0:1]   disk    IET      Hbd Disk         0001  /dev/sdd
+		[17:0:0:0]   storage IET      Controller       0001  -
+		[17:0:0:1]   disk    IET      Hbd Disk         0001  /dev/sde
+	2.查看多路径设备，并下IO
+		[root@node21 ~]# multipath -ll
+		mpathb (36574ecd5477b46a4967f84f744f6be25) dm-3 IET,Hbd Disk
+		size=10G features='0' hwhandler='0' wp=rw
+		`-+- policy='service-time 0' prio=1 status=active
+		  |- 15:0:0:1 sdc 8:32 active ready running
+		  |- 16:0:0:1 sdd 8:48 active ready running
+		  `- 17:0:0:1 sde 8:64 active ready running
+	通过dd命令或vdbench下发IO：
+		[root@node21 ~]# dd if=/dev/zero of=/dev/dm-3 bs=4k count=1024
+		1024+0 records in
+		1024+0 records out
+		4194304 bytes (4.2 MB, 4.0 MiB) copied, 0.0707347 s, 59.3 MB/s

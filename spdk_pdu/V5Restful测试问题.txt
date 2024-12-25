@@ -1,0 +1,6 @@
+
+		 
+
+allure:
+allure generate D:\path -o testoutput
+allure open

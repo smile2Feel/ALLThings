@@ -1,0 +1,113 @@
+初始化流程：
+iscsi_poll_group_create
+ SPDK_POLLER_REGISTER(iscsi_poll_group_poll)
+ SPDK_POLLER_REGISTER(iscsi_poll_group_handle_nop)
+	initialize_iscsi_poll_group
+	 (spdk_io_device_register,
+	 SPDK_ENV_FOREACH_CORE:
+	  spdk_thread_create,
+	  spdk_thread_send_msg:_iscsi_init_thread(spdk_get_io_channel/spdk_io_channel_get_ctx))
+		iscsi_parse_globals
+		 (iscsi_initialize_global_params, iscsi_initialize_all_pools, initialize_iscsi_conns,
+		 initialize_iscsi_poll_group)
+			spdk_iscsi_init
+				
+			
+SPDK_SUBSYSTEM_REGISTER(g_spdk_subsystem_iscsi)
+SPDK_SUBSYSTEM_DEPEND(iscsi, scsi)
+SPDK_SUBSYSTEM_DEPEND(iscsi, sock)
+
+
+建连流程：
+	iscsi_poll_group_add_conn
+	 spdk_sock_group_add_sock(iscsi_conn_sock_cb)
+	iscsi_conn_full_feature_migrate
+	 iscsi_conn_open_luns
+	 iscsi_poll_group_add_conn
+	 
+	 
+	iscsi_conn_start
+		iscsi_conn_construct
+		 alloc_conn
+		 spdk_sock_set_recvlowat
+		 iscsi_conn_params_init
+		 spdk_thread_send_msg(iscsi_conn_start,conn)
+			iscsi_portal_accept
+			 spdk_sock_accept
+			 iscsi_conn_construct
+				iscsi_portal_open
+				 spdk_sock_listen
+				 SPDK_POLLER_REGISTER(iscsi_portal_accept, spdk_iscsi_portal:p)
+					iscsi_portal_grp_open
+					  TAILQ_FOREACH(pg->head)
+					  iscsi_portal_open
+	
+SPDK_RPC_REGISTER("iscsi_create_portal_group", rpc_iscsi_create_portal_group)
+
+
+
+bdev创建：
+	
+	create_malloc_disk
+	 spdk_bdev_register: must be called from the SPDK app thread.
+	  bdev_register
+	   spdk_io_device_register
+	     g_bdev_mgrs.bdevs insert (g_bdev_mgr.spinlock)
+		 g_malloc_disks insert
+		 g_io_devices
+		rpc_bdev_malloc_create
+			
+	spdk_scsi_dev
+		TAILQ_HEAD(, spdk_scsi_lun) luns;
+		
+	struct spdk_iscsi_globals g_iscsi;
+	   
+pool消息怎么发？io-thread有哪些？有关联bdev吗？还是只能在app-thread上更改？
+
+每个bdev关联spdk_thread(bdev太多了，每个bdev发?还是记录下pool对应的bdev？)或每个target关联spdk_thread
+cb中遍历bdev或target，发送pool消息给对应spdk_thread, 执行更新函数更新lun状态
+改变bdev状态，已创建的channel状态会改变吗？
+
+池关联所有的卷，每次回调时更新所有bdev withlock，callback or main-thread?
+bdev是底层结构，和spdk-thread无关，有关的话，发送send_msg可以避免加锁
+原子变量记录状态
+
+
+hbd创建：
+1. SPDK_BDEV_MODULE_REGISTER
+	g_hbd_if
+    g_backend_device_ctx
+
+
+	hos_ioctx_create
+		bdev_hbd_disk_operate
+			bdev_hbd_mgmt_complete
+				bdev_hbd_finish_mgmtcb
+					bdev_hbd_disk_aio_open
+			bdev_hbd_disk_create
+				bdev_hbd_create
+	
+		SPDK_RPC_REGISTER("bdev_hbd_create")
+		
+6个spdk_thread, 1个app_thread, 4个io thread， 1个control thread
+
+
+
+0408 code review:
+spdk_thread创建，网络资源分配，建连过程：
+1. tgt, 创建channel时创建poller,sgroup创建subsystem,nvmf_rdma_poller_poll最底层
+2. nvmf.c 1000行连接分配， spdk_nvmf_tgt_get_qpair nvmf_rdma_poller_poll
+
+IO流：
+spdk_bdev_readv_blocks -> （bdev->fn_table时调用，开卷流程会添加）
+writesame新增接口，注意设置TYPE和cb即可。_nvmf_request_complete, hbd poller处理回调
+
+bdev:
+hbd_bdev_create, bdev结构， hbd->bdev设置进去
+开卷回调由main_td执行，bdev由main_td处理
+spdk_io_device_register, 获取channel；
+bdev_channel_create, 对某一个bdev获取channel，会调3次channel：bdev->hbd_bdev->backend_device并创建poller
+管理：全局红黑树 bdev_name_add(), app_thread操作
+bdev_io->channel.cb 协议层回调
+
+默认一个spdk_thread,一个网络poller（poll,group)，一个回调poller(backend创建channel时）。

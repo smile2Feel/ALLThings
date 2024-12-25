@@ -1,0 +1,28 @@
+0730 SPDK Destination:
+Code level with examples:
+	- memory pool
+	- spdk thread/ring(mutex free)
+	- RDMA transport
+	
+Tested/Log level:
+	- pci device(hardware)
+	- cpu core, NUMA node, cpu affinity
+	- some examples
+
+Docs level:
+	- Nvme standard
+	- vhost, virtio standard
+	- Kernel, UserSpace Driver
+
+GOT A PROJECT FINALLY.
+
+Kernel(everyday cookie, not too deep, hand on it!!!):
+ - videos, books
+ - experiments, driver
+ - ideas
+
+
+
+mempool:
+
+mmap, sbrk

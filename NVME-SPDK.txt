@@ -1,0 +1,20 @@
+1. rte_eal_init实现对CPU核的控制
+2. spdk_thread和posix thread区别，为什么需要实现一个spdk_thread？
+3. reactor和thread都有interrupt标志？
+4. event_queue, msg_queue的区别？
+5. spdk_set_thread用处。
+
+IO是怎么发送到ctrl的？CUSE和INI-TARGET有区别吗？
+
+CHAR device(CUSE)的IO流：
+注册hotplug，probe到device时创建ctrlr，注册bdev_nvme_poll_adminq
+创建nvme_cuse device，创建CHAR device(/dev/nvme0n1...), 注册open，ioctl方法
+写CHAR device, 发送消息到ctrlr->external_io_msgs
+bdev_nvme_poll_adminq时，调用nvme_io_msg_process从external_io_msgs取出request，调用
+spdk_nvme_ns_cmd_write, nvme_qpair_submit_request, nvme_transport_qpair_request发送请求
+
+INITITOR-TARGET:
+不需要hotplug，因为不会和SSD交互，所以不用关心硬件层
+不需要注册CHAR DEVICE，因为IO都是客户端发送来的报文，而不是通过本地设备
+仅需要关心协议层报文的处理，让用户可以将运行SPDK服务的主机当前标准的NVME存储设备来使用
+

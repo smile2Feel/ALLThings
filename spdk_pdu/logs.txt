@@ -1,0 +1,74 @@
+kill -15 $(pidof iscsi_tgt)
+sleep 1
+
+./build/bin/iscsi_tgt -m 0xf -b
+Apr  2 10:40:38 host132 iscsi_tgt: [ DPDK EAL parameters: iscsi --no-shconf -c 0xf --huge-unlink --no-telemetry --log-level=lib.eal:6 --log-level=lib.cryptodev:5 --log-level=user1:6 --iova-mode=pa --base-virtaddr=0x200000000000 --match-allocations --file-prefix=spdk_pid931581 ]
+Apr  2 10:40:38 host132 spdk[931581]: app.c: 815:spdk_app_start: *NOTICE*: Total cores available: 4
+Apr  2 10:40:38 host132 spdk[931581]: reactor.c: 937:reactor_run: *NOTICE*: Reactor started on core 3
+Apr  2 10:40:38 host132 spdk[931581]: reactor.c: 937:reactor_run: *NOTICE*: Reactor started on core 0
+Apr  2 10:40:38 host132 spdk[931581]: reactor.c: 937:reactor_run: *NOTICE*: Reactor started on core 2
+Apr  2 10:40:38 host132 spdk[931581]: reactor.c: 937:reactor_run: *NOTICE*: Reactor started on core 1
+Apr  2 10:43:47 host132 spdk[954963]: reactor.c: 620:get_rusage: *INFO*: Reactor 2: 2 voluntary context switches and 1 involuntary context switches in the last second.
+Apr  2 10:43:47 host132 spdk[954963]: reactor.c: 620:get_rusage: *INFO*: Reactor 0: 0 voluntary context switches and 7 involuntary context switches in the last second.
+Apr  2 10:43:48 host132 spdk[954963]: reactor.c: 620:get_rusage: *INFO*: Reactor 3: 0 voluntary context switches and 1 involuntary context switches in the last second.
+Apr  2 10:43:48 host132 spdk[954963]: reactor.c: 620:get_rusage: *INFO*: Reactor 1: 0 voluntary context switches and 2 involuntary context switches in the last second.
+
+
+
+./scripts/rpc.py bdev_malloc_create -b Malloc0 64 512
+./scripts/rpc.py bdev_malloc_create -b Malloc1 64 512
+Apr  2 10:44:54 host132 spdk[954963]: thread.c:2158:spdk_io_device_register: *DEBUG*: Registering io_device bdev_Malloc0 (0x2cd0951) on thread app_thread
+Apr  2 10:44:54 host132 spdk[954963]: bdev.c:7701:bdev_register: *DEBUG*: Inserting bdev Malloc0 into list
+Apr  2 10:44:54 host132 spdk[954963]: bdev.c:7974:bdev_open: *DEBUG*: Opening descriptor 0x2cd0f70 for bdev Malloc0 on thread 0x2cc46f0
+Apr  2 10:44:54 host132 spdk[954963]: bdev.c:7974:bdev_open: *DEBUG*: Opening descriptor 0x2cd1120 for bdev Malloc0 on thread 0x2cc46f0
+Apr  2 10:44:54 host132 spdk[954963]: thread.c:2347:spdk_get_io_channel: *DEBUG*: Get io_channel 0x2cd1590 for io_device bdev_Malloc0 (0x2cd0951) on thread app_thread refcnt 1
+Apr  2 10:44:54 host132 spdk[954963]: thread.c:2347:spdk_get_io_channel: *DEBUG*: Get io_channel 0x2cd16b0 for io_device bdev_malloc (0xae9020) on thread app_thread refcnt 1
+
+Apr  2 10:44:54 host132 spdk[954963]: bdev_malloc.c: 341:bdev_malloc_readv: *DEBUG*: read 32768 bytes from offset 0, iovcnt=1
+Apr  2 10:44:54 host132 spdk[954963]: accel.c: 187:accel_sequence_set_state: *DEBUG*: seq=0x7f72d4abe000, setting state: init -> await-virtbuf
+Apr  2 10:44:54 host132 spdk[954963]: accel.c: 187:accel_sequence_set_state: *DEBUG*: seq=0x7f72d4abe000, setting state: await-virtbuf -> check-bouncebuf
+Apr  2 10:44:54 host132 spdk[954963]: accel.c: 187:accel_sequence_set_state: *DEBUG*: seq=0x7f72d4abe000, setting state: check-bouncebuf -> await-bouncebuf
+Apr  2 10:44:54 host132 spdk[954963]: accel.c: 187:accel_sequence_set_state: *DEBUG*: seq=0x7f72d4abe000, setting state: await-bouncebuf -> exec-task
+Apr  2 10:44:54 host132 spdk[954963]: accel.c:1839:accel_process_sequence: *DEBUG*: Executing copy operation, sequence: 0x7f72d4abe000
+Apr  2 10:44:54 host132 spdk[954963]: accel.c: 187:accel_sequence_set_state: *DEBUG*: seq=0x7f72d4abe000, setting state: exec-task -> await-task
+Apr  2 10:44:54 host132 spdk[954963]: bdev.c:7974:bdev_open: *DEBUG*: Opening descriptor 0x2cd22e0 for bdev Malloc0 on thread 0x2cc46f0
+Apr  2 10:44:54 host132 spdk[954963]: thread.c:2320:spdk_get_io_channel: *DEBUG*: Get io_channel 0x2cd1590 for io_device bdev_Malloc0 (0x2cd0951) on thread app_thread refcnt 2
+
+Apr  2 10:44:54 host132 spdk[954963]: bdev.c:8376:spdk_bdev_close: *DEBUG*: Closing descriptor 0x2cd26b0 for bdev Malloc0 on thread 0x2cc46f0
+Apr  2 10:44:54 host132 spdk[954963]: thread.c:2385:put_io_channel: *DEBUG*: Releasing io_channel 0x2cd16b0 for io_device bdev_malloc (0xae9020) on thread app_thread
+Apr  2 10:44:54 host132 spdk[954963]: thread.c:2449:spdk_put_io_channel: *DEBUG*: Putting io_channel 0x2cd1740 for io_device accel (0xaec5e0) on thread app_thread refcnt 1
+
+Apr  2 10:44:54 host132 spdk[954963]: thread.c:2449:spdk_put_io_channel: *DEBUG*: Putting io_channel 0x2cd1a90 for io_device sw_accel_module (0xaec7a0) on thread app_thread refcnt 1
+Apr  2 10:44:54 host132 spdk[954963]: thread.c:2385:put_io_channel: *DEBUG*: Releasing io_channel 0x2cd1cb0 for io_device iobuf (0xaecc00) on thread app_thread
+Apr  2 10:44:54 host132 spdk[954963]: thread.c:2385:put_io_channel: *DEBUG*: Releasing io_channel 0x2cd1a90 for io_device sw_accel_module (0xaec7a0) on thread app_thread
+Apr  2 10:44:54 host132 spdk[954963]: jsonrpc_server_tcp.c: 285:jsonrpc_server_conn_recv: *DEBUG*: remote closed connection
+
+
+
+./scripts/rpc.py iscsi_create_portal_group 1 182.200.29.132:3260
+Apr  2 10:52:54 host132 spdk[954963]: sock.c: 388:spdk_sock_listen_ext: *DEBUG*: Creating a listening socket using impl posix
+Apr  2 10:52:54 host132 spdk[954963]: jsonrpc_server_tcp.c: 285:jsonrpc_server_conn_recv: *DEBUG*: remote closed connection
+
+
+
+./scripts/rpc.py iscsi_create_initiator_group 2 ANY 182.200.29.132/24
+Apr  2 10:53:55 host132 spdk[954963]: init_grp.c: 336:iscsi_init_grp_create_from_initiator_list: *DEBUG*: add initiator group (from initiator list) tag=2, #initiators=1, #masks=1
+Apr  2 10:53:55 host132 spdk[954963]: init_grp.c:  88:iscsi_init_grp_add_initiator: *DEBUG*: InitiatorName ANY
+Apr  2 10:53:55 host132 spdk[954963]: init_grp.c: 222:iscsi_init_grp_add_netmask: *DEBUG*: Netmask 182.200.29.132/24
+Apr  2 10:53:55 host132 spdk[954963]: jsonrpc_server_tcp.c: 285:jsonrpc_server_conn_recv: *DEBUG*: remote closed connection
+
+
+./scripts/rpc.py iscsi_create_target_node disk1 "Data Disk1" "Malloc0:0 Malloc1:1" 1:2 64 -d
+Apr  2 10:56:15 host132 spdk[954963]: bdev.c:7974:bdev_open: *DEBUG*: Opening descriptor 0x2cd0400 for bdev Malloc0 on thread 0x2cc46f0
+Apr  2 10:56:15 host132 spdk[954963]: bdev.c:7974:bdev_open: *DEBUG*: Opening descriptor 0x2cd06d0 for bdev Malloc1 on thread 0x2cc46f0
+Apr  2 10:56:15 host132 spdk[954963]: jsonrpc_server_tcp.c: 285:jsonrpc_server_conn_recv: *DEBUG*: remote closed connection
+
+
+./scripts/rpc.py  log_set_flag "scsi"
+./scripts/rpc.py  log_set_flag "iscsi"
+./scripts/rpc.py log_set_level "DEBUG"
+./scripts/rpc.py log_set_print_level "DEBUG"
+
+tcpdump -i ethA3d-0 -s 0 -w spdk-pkg.pcap 'tcp port 3260'
+
+iscsiadm -m discovery -t sendtargets -p 182.200.29.132:3260 -l

@@ -1,0 +1,15 @@
+The  Report  Target  Port  Groups command should be supported whenever the TPGS bits in a standard INQUIRY response are greater than zero.
+[View with sg_inq utility.]
+
+sg_rtpg [--decode] [--help] [--hex] [--raw] [--verbose] [--version] DEVICE
+
+[root@node82 SDS_Admin]# sg_rtpg /dev/sdm
+Report target port groups:
+  target port group id : 0x0 , Pref=0, Rtpg_fmt=0
+    target port group asymmetric access state : 0x00
+    T_SUP : 1, O_SUP : 1, LBD_SUP : 0, U_SUP : 1, S_SUP : 1, AN_SUP : 1, AO_SUP : 1
+    status code : 0x00
+    vendor unique status : 0x00
+    target port count : 01
+    Relative target port ids:
+      0x03

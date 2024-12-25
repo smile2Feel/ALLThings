@@ -1,0 +1,72 @@
+kill -15 $(pidof iscsi_tgt)
+sleep 1
+
+./build/bin/iscsi_tgt -m 0xf -b
+./scripts/rpc.py get_methods
+./scripts/rpc.py iscsi_get_target_nodes
+
+./scripts/rpc.py bdev_malloc_create -b Malloc0 64 512
+./scripts/rpc.py bdev_malloc_create -b Malloc1 64 512
+
+./scripts/rpc.py iscsi_create_portal_group 1 182.200.29.132:3260
+./scripts/rpc.py iscsi_create_initiator_group 2 ANY 182.200.29.132/24
+./scripts/rpc.py iscsi_create_target_node disk1 "Data Disk1" "Malloc0:0 Malloc1:1" 1:2 64 -d
+
+./scripts/rpc.py  log_set_flag "scsi"
+./scripts/rpc.py  log_set_flag "iscsi"
+./scripts/rpc.py  log_set_flag all
+./scripts/rpc.py log_set_level DEBUG
+./scripts/rpc.py log_set_print_level DEBUG
+
+
+
+tcpdump -i ethA3d-0 -s 0 -w spdk-pkg.pcap 'tcp port 3260'
+
+iscsiadm -m discovery -t sendtargets -p 182.200.29.132:3260 -l
+
+sg_VAAI:
+sg_dd if=/var/log/storage/TGT/TGT.log of=/dev/sdc skip=10 seek=2048 bs=512 count=10
+sg_dd if=/dev/sdc of=- skip=2048 bs=512 count=10
+
+sg_write_same --xferlen=512  --lba=0x12 --num=63 --in=writesame.in /dev/sdc
+sg_dd if=/dev/sdc of=- skip=0x12 bs=512 count=10
+
+
+sg_write_same --xferlen=512  --lba=0x82 --num=63 --in=writesame.in /dev/sdn
+sg_write_same --xferlen=512  --lba=0x22 --num=63 --in=writesame.in /dev/sdn
+sg_unmap --lba='0x22,0x82' --num='63,62' /dev/sdn
+sg_dd if=/dev/sdc of=- skip=0x82 bs=512 count=63
+
+
+
+sg_write_same --xferlen=512  --lba=0x22 --num=63 --in=writesame.in /dev/sdc
+sg_compare_and_write --xferlen=1024 --lba=0x22 --inc=writesame.in --inw=caw.write /dev/sdc
+sg_dd if=/dev/sdc of=- skip=0x22 bs=512 count=10
+
+sg_opcodes -o 0xa3 /dev/sdh
+sg_opcodes -o 0xa3 -s 0x0c /dev/sdh
+sg_opcodes -R /dev/sdh
+
+V7:
+kill -9 $(pidof tgtd)
+
+systemctl restart  tgtd
+
+
+sleep 5
+
+/opt/h3c/script/tgt/rpc.py iscsi_create_portal_group 1 182.200.29.65:3260
+
+/opt/h3c/script/tgt/rpc.py iscsi_host_create 1 1  "iqn.1994-05.com.redhat:1c78209253b7 1"
+/opt/h3c/script/tgt/rpc.py bdev_hbd_create .dp0.hbd 521 512 -b lun_ws1 -i  HBD_209 -u 60000000-0000-0000-0000-000000000521
+
+/opt/h3c/script/tgt/rpc.py iscsi_host_add_lun 1 1 521 lun_ws1 
+
+gdb /opt/h3c/bin/tgtd /corefile/core-\!opt\!h3c\!bin\!tgtd  
+ 
+ 
+ 
+ 
+ 
+ 
+ 

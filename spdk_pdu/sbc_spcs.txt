@@ -1,0 +1,130 @@
+已支持：
+1. sg_read
+Read data from a Linux SCSI generic (sg) device, a block device or a normal file with each read command issued to the same offset or logi‐
+cal  block  address (lba). This can be used to test (or time) disk caching, SCSI (or some other) transport throughput, and/or SCSI command
+overhead.
+
+sg_read if=/dev/sg0 bs=512 count=1MB mmap=1 time=2
+Time from second read command to end was 0.027182 secs, 18833.58 MB/sec
+Average number of read commands per second was 287432.86
+1000000+0 records in, read commands issued: 7813
+
+2. sg_sync
+Send  SYNCHRONIZE  CACHE(10)  or  SYNCHRONIZE CACHE(16) command to DEVICE.
+If successful these commands make sure that any blocks whose latest versions
+are held in cache are written to (also termed as "synchronized with") the medium.
+
+sg_sync /dev/sdg
+
+3. sg_readcap
+The normal action of the SCSI READ CAPACITY command is to fetch the number of blocks (and block size) from the DEVICE.
+The READ CAPACITY(16) response provides additional information not found in the READ CAPACITY(10) response.
+
+sg_readcap /dev/sdg
+sg_readcap -16 /dev/sdg
+
+Logical block provisioning: lbpme=1, lbprz=0（该字段不一样）
+
+4. sg_scan
+If no DEVICE names are given, sg_scan does a scan of the sg devices and outputs a line of information for each sg device that is currently bound to a SCSI device.
+
+sg_scan /dev/sdg
+
+5. sg_raw
+send arbitrary SCSI command to a device.
+
+sg_raw -r 1k /dev/sdg 12 00 00 00 60 00
+SCSI Status: Good
+Received 96 bytes of data:
+ 00     00 00 05 12 5b 00 10 02  49 4e 54 45 4c 20 20 20    ....[...INTEL
+ 10     48 62 64 20 44 69 73 6b  20 20 20 20 20 20 20 20    Hbd Disk
+ 20     30 30 30 31 20 20 20 20  20 20 20 20 20 20 20 20    0001
+ 30     20 20 20 20 20 20 20 20  00 00 09 60 03 00 03 20            ...`...
+ 40     00 40 00 00 00 00 00 00  00 00 00 00 00 00 00 00    .@..............
+ 50     00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00    ................
+
+6. sg_start
+send SCSI START STOP UNIT command: start, stop, load or eject medium
+
+sg_start --stop /dev/sdm
+sg_start --start /dev/sdm
+
+7. sg_map/sg_map26
+displays mapping between Linux sg and other SCSI devices.
+
+sg_map
+/dev/sg0
+/dev/sg1  /dev/sda
+/dev/sg2  /dev/sdb
+
+sg_map26 /dev/sdg
+/dev/sg7
+
+8.sg_modes(todo)
+This utility sends a MODE SENSE SCSI command to the DEVICE and outputs the response.
+
+sg_modes /dev/sdm
+    IET       VIRTUAL-DISK  0001   peripheral_type: disk [0x0]
+Mode parameter header from MODE SENSE(10):
+  Mode data length=110, medium type=0x00, WP=0, DpoFua=1, longlba=0
+  Block descriptor length=8
+> Direct access device block descriptors:
+   Density code=0x0
+ 00     00 00 00 00 00 00 02 00
+
+>> Unit Attention condition [vendor specific format], page_control: current
+ 00     00 00
+>> Disconnect-Reconnect, page_control: current
+ 00     02 0e 80 80 00 0a 00 00  00 00 00 00 00 00 00 00
+>> Caching, page_control: current
+ 00     08 12 10 00 ff ff 00 00  ff ff ff ff 80 14 00 00
+ 10     00 00 00 00
+>> Control, page_control: current
+ 00     0a 0a 02 10 00 00 00 00  00 00 02 00
+>> Control extension, page_control: current
+ 00     4a 01 00 1c 04 00 00 00  00 00 00 00 00 00 00 00
+ 10     00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+>> Informational exceptions control, page_control: current
+ 00     1c 0a 08 00 00 00 00 00  00 00 00 00
+ 
+
+
+
+不支持：
+1. sg_opcodes 
+The default action is to report supported operation codes.
+sg_opcodes --op=93h /dev/sdb
+sg_opcodes --tmf -n /dev/sdb
+sg_opcodes -an /dev/sdb
+
+2. sg_prevent
+Sends  a SCSI PREVENT ALLOW MEDIUM REMOVAL command to DEVICE.  The default action of this utility is to prevent the removing or ejecting of the medium from a drive. This is done by ignoring the SCSI START STOP UNIT command (see sg_start) and ignoring the eject button on the drive when the user presses it. Drives that  hold  removable  disks,  tape  cartridges or cd/dvd media typically implement this command. 
+
+sg_prevent /dev/sdg
+
+3. sg_rtpg(todo)
+send SCSI REPORT TARGET PORT GROUPS command.
+
+sg_rtpg /dev/sdm
+Report target port groups:
+  target port group id : 0x0 , Pref=0, Rtpg_fmt=0
+    target port group asymmetric access state : 0x00
+    T_SUP : 1, O_SUP : 1, LBD_SUP : 0, U_SUP : 1, S_SUP : 1, AN_SUP : 1, AO_SUP : 1
+    status code : 0x00
+    vendor unique status : 0x00
+    target port count : 01
+    Relative target port ids:
+      0x03
+
+4.sg_verify(todo)
+Sends one or more SCSI VERIFY (10 or 16) commands to DEVICE. These SCSI commands are defined in the SBC-2 (draft) standard at http://www.t10.org and SBC-3 drafts.
+
+No news is good news (i.e. if there are no verify errors detected then no  messages  are  sent  to
+stderr and the Unix exit status is 0).
+
+其他：
+sg_senddiag 均不支持(todo)
+sg_senddiag --pf --raw=- /dev/sdm < sdiag_sas_p1_cjtpat.txt
+SEND DIAGNOSTIC command, failed
+  try again with '-vv' for more information
+sg_senddiag failed: Illegal request
